@@ -1,0 +1,3 @@
+run,feature,audio_feature,vae_arch,cluster_method,clusters_requested,dbscan_eps,dbscan_min_samples,latent_dim,beta,cond_col,n,n_clusters_eff,silhouette,calinski_harabasz,davies_bouldin,ari,nmi,purity
+vae,hybrid,logmelspec,mlp,dbscan,6,0.5,5,16,1.0,,152,0,,,,0.0,0.0,
+vae,hybrid,logmelspec,mlp,dbscan,6,0.5,2,16,1.0,,152,0,,,,0.0,0.0,

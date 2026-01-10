@@ -1,0 +1,6 @@
+TITLE: _criatura
+ARTIST: _Disparan_
+LANGUAGE: bn
+SOURCE: (paste lyrics here from a licensed/public-domain source)
+
+(lyrics...)

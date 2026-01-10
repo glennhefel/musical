@@ -1,0 +1,2 @@
+run,feature,audio_feature,vae_arch,cluster_method,clusters_requested,dbscan_eps,dbscan_min_samples,latent_dim,beta,cond_col,n,n_clusters_eff,silhouette,calinski_harabasz,davies_bouldin,ari,nmi,purity
+raw,logmelspec,mfcc,conv2d,kmeans,6,0.5,5,16,1.0,,152,6,0.09348340332508087,19.53091290880669,2.1947807751892174,0.06465107766393165,0.08967084466502254,0.5

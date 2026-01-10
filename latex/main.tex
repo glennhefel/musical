@@ -1,0 +1,185 @@
+% NeurIPS 2024 report (content-only).
+% This file is intended to be dropped into the official NeurIPS 2024 Overleaf template:
+%   latex/templates/neurips-2024/tpsbbrdqcmsh
+% If you compile locally, ensure the template's neurips_2024.sty is on your TEXINPUTS path.
+
+\documentclass{article}
+
+% In the official template, this style file is provided.
+\usepackage[final]{neurips_2024}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{microtype}
+\usepackage{booktabs}
+\usepackage{amsmath, amssymb}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{hyperref}
+
+\title{Hybrid Music Clustering with Variational Autoencoders and Multi-Modal Features}
+
+\author{%
+  Mahid Saadman\\
+  \texttt{(replace with your affiliation/email)}
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We study unsupervised clustering of music examples using learned latent representations from variational autoencoders (VAEs) and compare them against classical baselines.
+Our pipeline extracts audio features (log-mel spectrograms) and text features (lyrics TF--IDF), learns embeddings using convolutional (audio) or MLP (lyrics) VAEs, and applies clustering methods including K-Means, Agglomerative clustering, DBSCAN, and Spectral clustering.
+We report clustering quality using internal metrics (Silhouette, Calinski--Harabasz, Davies--Bouldin) and external metrics computed against available metadata labels (ARI, NMI, purity).
+Across experiments, we observe that DBSCAN can degenerate to an all-noise solution (leading to undefined internal metrics), while several baselines (notably AE and PCA variants) can outperform VAEs in our current training regime.
+\end{abstract}
+
+\section{Introduction}
+Unsupervised clustering of music is useful for organizing large collections, discovering structure without manual annotation, and building retrieval or recommendation systems.
+However, music is inherently multi-modal: audio carries timbral and rhythmic cues while lyrics carry semantic and stylistic cues.
+This project explores hybrid representation learning for music clustering by combining audio and lyrics features and learning compact latent spaces using VAEs.
+We evaluate when VAE-style representations help and when simpler baselines remain competitive.
+
+\section{Related Work}
+\textbf{Representation learning with VAEs.} VAEs learn a probabilistic latent space by optimizing a reconstruction objective regularized by a KL divergence term~\citep{kingma2014vae}.
+Variants such as $\beta$-VAE encourage disentanglement by increasing the KL weight~\citep{higgins2017beta}.
+
+\textbf{Dimensionality reduction and visualization.} t-SNE~\citep{maaten2008tsne} and UMAP~\citep{mcinnes2018umap} are widely used for 2D visualization of learned embeddings.
+
+\textbf{Clustering.} K-Means~\citep{lloyd1982kmeans}, Agglomerative clustering, DBSCAN~\citep{ester1996dbscan}, and Spectral clustering are standard unsupervised methods.
+In density-based clustering, noise points are explicitly modeled (e.g., label $-1$ in DBSCAN), which can make some internal metrics undefined.
+
+\section{Method}
+\subsection{Feature Extraction}
+We use two main input modalities:
+\begin{itemize}
+  \item \textbf{Audio:} log-mel spectrograms with $64$ mel bins and a fixed number of time frames (target $512$).
+  \item \textbf{Lyrics:} TF--IDF vectors built from preprocessed lyrics text.
+\end{itemize}
+We standardize features before training and clustering.
+
+\subsection{VAE Architectures}
+We employ two VAE variants depending on feature shape:
+\begin{itemize}
+  \item \textbf{MLP VAE} for 2D vector features (e.g., lyrics TF--IDF).
+  \item \textbf{Conv2D VAE} for 4D time--frequency tensors (e.g., log-mel spectrograms).
+\end{itemize}
+Unless otherwise noted, we use latent dimension $16$, batch size $128$, learning rate $10^{-3}$, and train for $10$ epochs.
+
+\subsection{Hybrid Representation}
+For the hybrid setting, we concatenate an audio embedding (from the audio VAE) with a lyrics embedding (dimensionality $128$ for the lyrics component), and then cluster the resulting concatenated representation.
+
+\subsection{Clustering Methods}
+We evaluate K-Means ($k=6$ for medium/hard, $k=2$ for the easy language split), Agglomerative clustering, DBSCAN ($\epsilon=0.5$, min\_samples tuned to reduce all-noise solutions), and Spectral clustering (nearest-neighbor affinity with $n\_\text{neighbors}=10$).
+
+\section{Experiments}
+\subsection{Datasets}
+We use the project metadata CSV manifests:
+\begin{itemize}
+  \item \textbf{Easy task (lyrics-only, balanced):} \texttt{data/metadata\_known\_categories\_preprocessed\_balanced.csv} with $N=4044$ examples.
+  \item \textbf{Medium/Hard tasks (mixed audio+lyrics):} \texttt{data/metadata\_audio\_lyrics\_mixed.csv} with $N=152$ examples in the current runs.
+\end{itemize}
+
+\subsection{Training and Evaluation}
+We run the pipeline via \texttt{run\_all\_tasks.py} (wrapped by \texttt{run\_experiments.sh}).
+For each run we save: (i) \texttt{clustering\_metrics.csv}, (ii) \texttt{latents.npz}, and (iii) visualizations (UMAP/t-SNE scatter and cluster distribution plots).
+
+\section{Results}
+We summarize key results below (metrics are read from the generated comparison CSVs).
+Internal metrics (Silhouette/CH/DB) are computed on non-noise points; if a method yields fewer than 2 effective clusters, internal metrics become undefined.
+
+\subsection{Easy Task: Lyrics-only Language Clustering}
+Table~\ref{tab:easy} compares a VAE learned on lyrics TF--IDF vs a PCA baseline.
+
+\begin{table}[t]
+\caption{Easy task results ($N=4044$). Labels are \texttt{language}.}
+\label{tab:easy}
+\centering
+\begin{tabular}{lrrrr}
+\toprule
+Method & Silhouette & ARI & NMI & Purity\\
+\midrule
+PCA + K-Means & 0.362945 & 0.993086 & 0.982330 & 0.998269\\
+VAE (MLP) + K-Means & 0.045351 & -0.000232 & 0.000011 & 0.501978\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Medium Task: Audio and Hybrid Clustering}
+Table~\ref{tab:medium} shows representative medium-task outcomes.
+We additionally flag a common failure mode: DBSCAN producing an all-noise labeling (no effective clusters), which leads to NaNs for internal metrics.
+
+\begin{table}[t]
+\caption{Medium task highlights ($N=152$, $k=6$ where applicable).}
+\label{tab:medium}
+\centering
+\begin{tabular}{l l r r r}
+\toprule
+Run & Clusterer & Silhouette & CH & DB\\
+\midrule
+AE (log-mel) & K-Means & 0.464142 & 279.701 & 0.826945\\
+PCA (log-mel) & K-Means & 0.159644 & 28.195 & 1.554694\\
+Raw (log-mel) & K-Means & 0.093483 & 19.531 & 2.194781\\
+Conv VAE (log-mel) & K-Means & 0.050264 & 7.955 & 2.708086\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Hard Task: Conditional/Disentangled Variants and Baselines}
+Hard-task runs include $\beta$-VAE, conditional VAE (conditioned on language), and multi-modal representations.
+Baselines remain strong under the current hyperparameters.
+
+\begin{figure}[t]
+\centering
+\begin{subfigure}{0.48\linewidth}
+  \centering
+  \includegraphics[width=\linewidth]{figures/easy_pca_kmeans_umap.png}
+  \caption{Easy: PCA + K-Means (UMAP)}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.48\linewidth}
+  \centering
+  \includegraphics[width=\linewidth]{figures/easy_vae_kmeans_umap.png}
+  \caption{Easy: VAE + K-Means (UMAP)}
+\end{subfigure}
+
+\vspace{0.5em}
+\begin{subfigure}{0.48\linewidth}
+  \centering
+  \includegraphics[width=\linewidth]{figures/medium_ae_kmeans_umap.png}
+  \caption{Medium: AE + K-Means (UMAP)}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.48\linewidth}
+  \centering
+  \includegraphics[width=\linewidth]{figures/medium_dbscan_failure_umap.png}
+  \caption{Medium: DBSCAN failure case (all noise)}
+\end{subfigure}
+\caption{Representative latent space visualizations (UMAP).}
+\label{fig:umap}
+\end{figure}
+
+\section{Discussion}
+\textbf{Why baselines can beat VAEs here.} Several settings show stronger internal clustering structure for AE/PCA baselines than for VAEs.
+A likely reason is that the current training schedule (e.g., 10 epochs) may be insufficient for VAEs to learn a well-separated latent space, and the KL regularization can encourage overlap when the dataset is small.
+In contrast, deterministic AEs preserve reconstruction fidelity without the same probabilistic smoothing.
+
+\textbf{DBSCAN failure modes.} DBSCAN is sensitive to $\epsilon$ and min\_samples.
+When all points are labeled as noise ($n\_\text{clusters\_eff}=0$), internal metrics are undefined by design.
+We therefore treat NaNs as a diagnostic signal rather than a computation error.
+
+\textbf{Limitations.} Our evaluation uses available metadata labels (e.g., language or category) as ``ground truth'' for ARI/NMI/purity.
+These labels are not necessarily aligned with the intrinsic structure of audio/lyrics features.
+
+\section{Conclusion}
+We implemented a reproducible pipeline for multi-modal music clustering with VAEs and several clustering algorithms.
+Empirically, strong baselines (AE/PCA) can outperform VAEs under the current hyperparameters, and DBSCAN frequently degenerates to all-noise on these embeddings.
+Future work includes longer training, larger datasets, better multi-modal fusion, and systematic hyperparameter sweeps for density-based clustering.
+
+\section*{References}
+\small
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}
