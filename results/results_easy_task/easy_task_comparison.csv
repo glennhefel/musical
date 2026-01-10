@@ -1,3 +1,0 @@
-﻿run_dir,run,feature,audio_feature,vae_arch,cluster_method,clusters_requested,dbscan_eps,dbscan_min_samples,latent_dim,beta,cond_col,n,n_clusters_eff,silhouette,calinski_harabasz,davies_bouldin,ari,nmi,purity
-baseline_pca_lyrics_tfidf_kmeans,pca,lyrics_tfidf,mfcc,mlp,kmeans,2,0.5,5,16,1.0,,4044,2,0.3629449903964996,2017.111174066152,1.2284958385254283,0.9930864371003628,0.982330384500496,0.998269040553907
-vae_lyrics_tfidf_kmeans,vae,lyrics_tfidf,mfcc,mlp,kmeans,2,0.5,5,16,1.0,,4044,2,0.0453510992228984,193.49137624625016,4.498155407784197,-0.0002317408056975,1.1292044950529248e-05,0.5019782393669634
