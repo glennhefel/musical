@@ -38,5 +38,4 @@ Evaluation: silhouette / Calinski-Harabasz / Davies-Bouldin (internal), plus ARI
 - For full audio+lyrics experiments, you must supply your own audio files in the expected folder structure (see `data/` and `src/dataset.py`).
 - All code is compatible with Python 3.8+.
 
-## Citation
-If you use this code or pipeline, please cite or reference the original repository and paper.
+
