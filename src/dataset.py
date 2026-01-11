@@ -41,6 +41,39 @@ def load_metadata(metadata_csv: str | Path) -> pd.DataFrame:
             df[col] = None
 
     df["id"] = df["id"].astype(str)
+
+    # Derived language grouping used by some experiment suites.
+    # Goal: treat English/German/French/Italian as one group and Bangla as another.
+    # Any other or missing languages are mapped to stable catch-all groups so
+    # downstream evaluation/plots always have a label for every row.
+    def _normalize_lang(value: object) -> str:
+        if value is None:
+            return ""
+        try:
+            text = str(value)
+        except Exception:
+            return ""
+
+        text = text.strip().lower()
+        if not text:
+            return ""
+
+        # handle tags like en-US, bn_BD, etc.
+        for sep in ("-", "_"):
+            if sep in text:
+                text = text.split(sep, 1)[0]
+                break
+        return text
+
+    lang_norm = df["language"].map(_normalize_lang)
+
+    def _language_group(value: str) -> str:
+        # All non-bangla languages (including unknown/other) are mapped to 'germanic'.
+        if value in {"bn", "ben", "bangla", "bengali"}:
+            return "bangla"
+        return "germanic"
+
+    df["language_group"] = lang_norm.map(_language_group)
     return df
 
 
