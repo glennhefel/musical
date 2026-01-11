@@ -34,7 +34,7 @@ Clustering: KMeans, Agglomerative, DBSCAN, Spectral.
 Evaluation: silhouette / Calinski-Harabasz / Davies-Bouldin (internal), plus ARI/NMI/purity when you provide a ground-truth label column.
 
 ## Notes
-- Audio files are not included in this repository. Download them here and put them in the data folde.
+- Audio files are not included in this repository. Download them here [https://github.com/glennhefel/musical](https://drive.google.com/drive/folders/1WmVm8YNGJE4wORUcDXP3M2m9d1RBR7Wh?usp=sharing) and put them in the data folder.
 - For full audio+lyrics experiments, you must supply your own audio files in the expected folder structure (see `data/` and `src/dataset.py`).
 - All code is compatible with Python 3.8+.
 
